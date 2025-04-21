@@ -1,0 +1,32 @@
+name: books-cms-service
+
+volumes:
+  pg_data:
+
+networks:
+  books_network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres
+    container_name: pg-books
+    env_file:
+      - .env
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - ${DB_PORT_READ}:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: redis-books
+    env_file:
+      - .env
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      - books_network
+    
