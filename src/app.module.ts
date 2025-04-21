@@ -1,4 +1,4 @@
-import { ApolloDriverConfig } from '@nestjs/apollo';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -27,6 +27,7 @@ import { UsersModule } from './users/users.module';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       autoSchemaFile: join(__dirname, 'schema.gql'),
+      driver: ApolloDriver,
       introspection: true,
       playground: process.env.NODE_ENV !== 'production',
     }),
