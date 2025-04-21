@@ -1,18 +1,13 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
-import { PaginationAndSortingInputDto } from '../../core/dto';
+import { IsInt, IsOptional, IsString } from 'class-validator';
+import { PaginatedFilterInput } from '../../core/core.utils';
 import { BookSortableFields } from '../books.enum';
 
 @InputType()
-export class GetBooksInputDto extends PaginationAndSortingInputDto {
-  @Field(() => BookSortableFields, {
-    nullable: true,
-    defaultValue: BookSortableFields.title,
-  })
-  @IsEnum(BookSortableFields)
-  @IsOptional()
-  sortBy: BookSortableFields = BookSortableFields.title;
-
+export class GetBooksInputDto extends PaginatedFilterInput(
+  BookSortableFields,
+  BookSortableFields.title,
+) {
   @Field(() => String, { nullable: true })
   @IsString()
   @IsOptional()

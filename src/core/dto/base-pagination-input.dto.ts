@@ -2,7 +2,7 @@ import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsIn, IsInt, IsOptional, IsPositive, Max, Min } from 'class-validator';
 
 @InputType()
-export class PaginationAndSortingInputDto {
+export class BasePaginationInputDto {
   @Field(() => String, { nullable: true, defaultValue: 'ASC' })
   @IsOptional()
   @IsIn(['ASC', 'DESC'])
