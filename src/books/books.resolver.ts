@@ -1,23 +1,31 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Book } from './books.entity';
 import { BooksService } from './books.service';
+import {
+  BookCreationInputDto,
+  GetBooksInputDto,
+  PaginatedBookDto,
+} from './dto';
 
 @Resolver(() => Book)
 export class BooksResolver {
   constructor(private readonly booksService: BooksService) {}
 
-  @Query(() => [Book])
-  async getBooks() {
-    return this.booksService.findAll();
+  @Query(() => PaginatedBookDto)
+  async getBooks(
+    @Args('input') dto: GetBooksInputDto,
+  ): Promise<PaginatedBookDto> {
+    return await this.booksService.findAll({
+      take: dto.limit,
+      skip: (dto.page - 1) * dto.limit,
+      order: {
+        [dto.sortBy]: dto.sortOrder,
+      },
+    });
   }
 
   @Mutation(() => Book)
-  async createBook(
-    @Args('title') title: string,
-    @Args('author') author: string,
-    @Args('publicationDate') publicationDate: string,
-    @Args('genre', { nullable: true }) genre: string,
-  ) {
-    return this.booksService.create({ title, author, publicationDate, genre });
+  async createBook(@Args('bookCreationInput') dto: BookCreationInputDto) {
+    return this.booksService.create(dto);
   }
 }
