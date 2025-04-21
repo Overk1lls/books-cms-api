@@ -15,13 +15,7 @@ export class BooksResolver {
   async getBooks(
     @Args('input') dto: GetBooksInputDto,
   ): Promise<PaginatedBookDto> {
-    return await this.booksService.findAll({
-      take: dto.limit,
-      skip: (dto.page - 1) * dto.limit,
-      order: {
-        [dto.sortBy]: dto.sortOrder,
-      },
-    });
+    return await this.booksService.findAll(dto);
   }
 
   @Mutation(() => Book)
