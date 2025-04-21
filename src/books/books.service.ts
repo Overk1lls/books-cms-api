@@ -1,22 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { Book, BookCreationAttrs } from './books.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Book, BookCreationAttrs, BookUpdateAttrs } from './books.entity';
 
 @Injectable()
 export class BooksService {
-  private readonly books: Book[] = [];
+  constructor(
+    @InjectRepository(Book)
+    private readonly repository: Repository<Book>,
+  ) {}
 
-  findAll(): Book[] {
-    return this.books;
+  async findAll(): Promise<Book[]> {
+    return await this.repository.find();
   }
 
-  create(book: BookCreationAttrs): Book {
-    const newBook = {
-      ...book,
-      id: `${this.books.length + 1}`,
-    } as Book;
+  async create(bookData: BookCreationAttrs): Promise<Book> {
+    const book = this.repository.create(bookData);
+    return await this.repository.save(book);
+  }
 
-    this.books.push(newBook);
+  async update(id: string, bookData: BookUpdateAttrs): Promise<void> {
+    await this.repository.update(id, bookData);
+  }
 
-    return newBook;
+  async delete(id: string): Promise<void> {
+    await this.repository.delete(id);
   }
 }
