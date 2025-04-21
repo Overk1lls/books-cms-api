@@ -1,1 +1,1 @@
-export * from './sorting-pagination-input.dto';
+export * from './base-pagination-input.dto';
