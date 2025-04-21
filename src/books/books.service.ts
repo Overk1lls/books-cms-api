@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, FindOptionsOrder, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { RedisService } from '../redis/redis.service';
 import { Book, BookCreationAttrs, BookUpdateAttrs } from './books.entity';
-import { PaginatedBookDto } from './dto';
+import { BookSortableFields } from './books.enum';
+import { GetBooksInputDto, PaginatedBookDto } from './dto';
 
 @Injectable()
 export class BooksService {
@@ -14,24 +15,52 @@ export class BooksService {
     private readonly redisService: RedisService,
   ) {}
 
-  async findAll(options?: FindManyOptions<Book>): Promise<PaginatedBookDto> {
-    const take = options?.take ?? 1;
-    const skip = options?.skip ?? 10;
-    const order = options?.order ?? {};
+  async findAll(dto: GetBooksInputDto): Promise<PaginatedBookDto> {
+    const {
+      limit = 10,
+      page = 1,
+      sortBy = BookSortableFields.title,
+      sortOrder = 'ASC',
+      title,
+      author,
+      publicationYear,
+    } = dto;
 
-    const cacheKey = this.getCacheKey(take, skip, order);
+    const cacheKey = this.getCacheKey(dto);
     const cached = await this.redisService.getCache<PaginatedBookDto>(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const [data, total] = await this.repository.findAndCount(options);
+    const qb = this.repository.createQueryBuilder('b');
+
+    if (title) {
+      qb.andWhere('LOWER(b.title) LIKE LOWER(:title)', { title: `%${title}%` });
+    }
+
+    if (author) {
+      qb.andWhere('LOWER(b.author) LIKE LOWER(:author)', {
+        author: `%${author}%`,
+      });
+    }
+
+    if (publicationYear) {
+      qb.andWhere('EXTRACT(YEAR FROM b.publicationDate) = :year', {
+        year: publicationYear,
+      });
+    }
+
+    qb.orderBy(sortBy, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
     const result: PaginatedBookDto = {
       total,
+      page,
       data: data ?? [],
-      page: Math.floor(skip / take) + 1,
-      pageSize: take,
-      totalPages: Math.ceil((total ?? 0) / take),
+      pageSize: limit,
+      totalPages: Math.ceil((total ?? 0) / limit),
     };
 
     await this.redisService.setCache(cacheKey, result, 300);
@@ -60,11 +89,11 @@ export class BooksService {
     await this.redisService.clear();
   }
 
-  private getCacheKey(
-    take: number,
-    skip: number,
-    order: FindOptionsOrder<Book>,
-  ): string {
-    return `books:take:${take}:skip:${skip}:${JSON.stringify(order)}`;
+  private getCacheKey(dto: GetBooksInputDto): string {
+    const key = Object.keys(dto)
+      .map((key) => `${key}:${dto[key]}`)
+      .join(':');
+
+    return `books:${key}`;
   }
 }
