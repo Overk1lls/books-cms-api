@@ -19,11 +19,11 @@ export class Book {
 
   @Column()
   @Field()
-  publicationDate: string;
+  publicationDate: Date;
 
   @Column({ nullable: true })
   @Field({ nullable: true })
-  genre: string;
+  genre?: string;
 }
 
 export type BookCreationAttrs = EntityOptional<EntityAttributes<Book>, 'genre'>;
