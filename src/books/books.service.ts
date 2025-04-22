@@ -58,9 +58,9 @@ export class BooksService {
     const result: PaginatedBookDto = {
       total,
       page,
-      data: data ?? [],
       pageSize: limit,
       totalPages: Math.ceil((total ?? 0) / limit),
+      data: data ?? [],
     };
 
     await this.redisService.setCache(cacheKey, result, 300);
@@ -78,15 +78,21 @@ export class BooksService {
   }
 
   async update(id: string, bookData: BookUpdateAttrs): Promise<void> {
-    await this.repository.update(id, bookData);
+    if (!Object.keys(bookData).length) return;
 
-    await this.redisService.clear();
+    const { affected } = await this.repository.update(id, bookData);
+
+    if (affected) {
+      await this.redisService.clear();
+    }
   }
 
   async delete(id: string): Promise<void> {
-    await this.repository.delete(id);
+    const { affected } = await this.repository.delete(id);
 
-    await this.redisService.clear();
+    if (affected) {
+      await this.redisService.clear();
+    }
   }
 
   private getCacheKey(dto: GetBooksInputDto): string {
