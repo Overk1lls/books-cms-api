@@ -1,7 +1,10 @@
 /**
- * @description Omits `id`, `createdAt`, `updatedAt` from entity
+ * @description Omits `id`, `createdAt`, `updatedAt`, `searchVector` from entity
  */
-export type EntityAttributes<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
+export type EntityAttributes<T> = Omit<
+  T,
+  'id' | 'createdAt' | 'updatedAt' | 'searchVector'
+>;
 
 /**
  * @description Makes entity properties optional, usually for the creation attributes type

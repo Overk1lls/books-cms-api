@@ -34,4 +34,4 @@ export class Book {
 }
 
 export type BookCreationAttrs = EntityOptional<EntityAttributes<Book>, 'genre'>;
-export type BookUpdateAttrs = EntityAttributes<Book>;
+export type BookUpdateAttrs = Partial<EntityAttributes<Book>>;

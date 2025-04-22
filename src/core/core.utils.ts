@@ -8,6 +8,8 @@ import {
 import { IsEnum, IsOptional } from 'class-validator';
 import { BasePaginationInputDto } from './dto';
 
+export const randomString = () => (Math.random() + 1).toString(36).substring(2);
+
 export function PaginatedResponse<T>(classRef: ReturnTypeFuncValue) {
   @ObjectType({ isAbstract: true })
   abstract class PaginatedResponseClass {
@@ -42,7 +44,7 @@ export function PaginatedFilterInput<SortEnumType>(
     })
     @IsEnum(sortEnum)
     @IsOptional()
-    sortBy: SortEnumType = defaultSortField;
+    sortBy?: SortEnumType = defaultSortField;
   }
 
   return BasePaginatedFilterInput;
