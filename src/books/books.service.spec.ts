@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Author } from '../authors/authors.entity';
+import { AuthorsService } from '../authors/authors.service';
 import { CoreModule } from '../core/core.module';
 import { randomString } from '../core/core.utils';
 import { RedisService } from '../redis/redis.service';
@@ -12,6 +14,7 @@ import { PaginatedBookDto } from './dto';
 describe('BooksService', () => {
   let module: TestingModule;
   let service: BooksService;
+  let authorsService: AuthorsService;
   let bookRepo: Repository<Book>;
   let redisService: RedisService;
 
@@ -31,6 +34,7 @@ describe('BooksService', () => {
     }).compile();
 
     service = module.get(BooksService);
+    authorsService = module.get(AuthorsService);
     bookRepo = module.get<Repository<Book>>(getRepositoryToken(Book));
     redisService = module.get(RedisService);
   });
@@ -44,8 +48,11 @@ describe('BooksService', () => {
       jest.spyOn(redisService, 'getCache').mockResolvedValueOnce(null);
 
       const randomStr = randomString();
+      const author = await authorsService.create({
+        name: `Author ${randomStr}`,
+      });
       const book = await service.create({
-        author: `Author ${randomStr}`,
+        author,
         title: `Title ${randomStr}`,
         publicationDate: new Date(),
         genre: 'Horror',
@@ -65,6 +72,9 @@ describe('BooksService', () => {
         data: [
           expect.objectContaining<Partial<Book>>({
             id: book.id,
+            author: expect.objectContaining<Partial<Author>>({
+              id: author.id,
+            }) as Author,
           }) as Book,
         ],
       });
@@ -93,8 +103,11 @@ describe('BooksService', () => {
 
     it('should create and update a book', async () => {
       const randomStr = randomString();
+      const author = await authorsService.create({
+        name: `Author ${randomStr}`,
+      });
       const book = await service.create({
-        author: `Author ${randomStr}`,
+        author,
         title: `Title ${randomStr}`,
         publicationDate: new Date(),
         genre: 'Horror',
@@ -122,8 +135,11 @@ describe('BooksService', () => {
       const spy = jest.spyOn(redisService, 'clear');
 
       const randomStr = randomString();
+      const author = await authorsService.create({
+        name: `Author ${randomStr}`,
+      });
       const book = await service.create({
-        author: `Author ${randomStr}`,
+        author,
         title: `Title ${randomStr}`,
         publicationDate: new Date(),
         genre: 'Horror',

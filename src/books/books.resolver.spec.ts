@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { randomUUID } from 'crypto';
+import { AuthorsService } from '../authors/authors.service';
+import { randomString } from '../core/core.utils';
 import { Book } from './books.entity';
 import { BookSortableFields } from './books.enum';
 import { BooksResolver } from './books.resolver';
@@ -21,6 +23,12 @@ describe('BooksResolver', () => {
           useValue: {
             findAll: jest.fn(),
             create: jest.fn(),
+          },
+        },
+        {
+          provide: AuthorsService,
+          useValue: {
+            findByIdThrowable: jest.fn(),
           },
         },
       ],
@@ -66,12 +74,16 @@ describe('BooksResolver', () => {
     it('should call booksService.create with correct arguments', async () => {
       const dto: BookCreationInputDto = {
         title: 'Test Book',
-        author: 'Author',
+        authorId: 'Author',
         publicationDate: new Date(),
       };
       const result: Book = {
         ...dto,
         id: randomUUID(),
+        author: {
+          id: randomUUID(),
+          name: randomString(),
+        },
       };
 
       const spy = jest.spyOn(service, 'create').mockResolvedValueOnce(result);

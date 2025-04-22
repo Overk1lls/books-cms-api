@@ -32,14 +32,16 @@ export class BooksService {
       return cached;
     }
 
-    const qb = this.repository.createQueryBuilder('b');
+    const qb = this.repository
+      .createQueryBuilder('b')
+      .innerJoinAndSelect('b.author', 'a');
 
     if (title) {
       qb.andWhere('LOWER(b.title) LIKE LOWER(:title)', { title: `%${title}%` });
     }
 
     if (author) {
-      qb.andWhere('LOWER(b.author) LIKE LOWER(:author)', {
+      qb.andWhere('LOWER(a.name) LIKE LOWER(:author)', {
         author: `%${author}%`,
       });
     }
@@ -50,7 +52,7 @@ export class BooksService {
       });
     }
 
-    qb.orderBy(sortBy, sortOrder)
+    qb.orderBy(`b.${sortBy}`, sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
 

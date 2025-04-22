@@ -1,8 +1,16 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { EntityAttributes, EntityOptional } from '../app.types';
+import { Author } from '../authors/authors.entity';
 
-@Entity({ name: 'books' })
+@Entity('books')
 @Index('idx_books_search_vector', { synchronize: false })
 @ObjectType()
 export class Book {
@@ -15,11 +23,6 @@ export class Book {
   @Field()
   title: string;
 
-  @Column()
-  @Index()
-  @Field()
-  author: string;
-
   @Column({ name: 'publication_date' })
   @Index()
   @Field()
@@ -29,8 +32,13 @@ export class Book {
   @Field({ nullable: true })
   genre?: string;
 
-  @Column({ name: 'search_vector', type: 'tsvector', nullable: true })
+  @Column('tsvector', { name: 'search_vector', nullable: true })
   searchVector?: string;
+
+  @Field(() => Author)
+  @ManyToOne(() => Author, (a) => a.books, { eager: true })
+  @JoinColumn({ name: 'author_id' })
+  author: Author;
 }
 
 export type BookCreationAttrs = EntityOptional<EntityAttributes<Book>, 'genre'>;
