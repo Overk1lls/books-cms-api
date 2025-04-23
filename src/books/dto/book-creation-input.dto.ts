@@ -1,5 +1,5 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
+import { Field, ID, InputType } from '@nestjs/graphql';
+import { IsDateString, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 @InputType()
 export class BookCreationInputDto {
@@ -8,10 +8,10 @@ export class BookCreationInputDto {
   @IsNotEmpty()
   title: string;
 
-  @Field()
-  @IsString()
+  @Field(() => ID)
+  @IsUUID()
   @IsNotEmpty()
-  author: string;
+  authorId: string;
 
   @Field()
   @IsDateString()

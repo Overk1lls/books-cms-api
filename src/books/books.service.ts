@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { formCacheKeyByEntity } from '../core/core.utils';
 import { RedisService } from '../redis/redis.service';
 import { Book, BookCreationAttrs, BookUpdateAttrs } from './books.entity';
-import { BookSortableFields } from './books.enum';
 import { GetBooksInputDto, PaginatedBookDto } from './dto';
 
 @Injectable()
@@ -16,44 +16,15 @@ export class BooksService {
   ) {}
 
   async findAll(dto: GetBooksInputDto): Promise<PaginatedBookDto> {
-    const {
-      limit = 10,
-      page = 1,
-      sortBy = BookSortableFields.title,
-      sortOrder = 'ASC',
-      title,
-      author,
-      publicationYear,
-    } = dto;
+    const { limit = 10, page = 1 } = dto;
 
-    const cacheKey = this.getCacheKey(dto);
+    const cacheKey = formCacheKeyByEntity('books', dto);
     const cached = await this.redisService.getCache<PaginatedBookDto>(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const qb = this.repository.createQueryBuilder('b');
-
-    if (title) {
-      qb.andWhere('LOWER(b.title) LIKE LOWER(:title)', { title: `%${title}%` });
-    }
-
-    if (author) {
-      qb.andWhere('LOWER(b.author) LIKE LOWER(:author)', {
-        author: `%${author}%`,
-      });
-    }
-
-    if (publicationYear) {
-      qb.andWhere('EXTRACT(YEAR FROM b.publicationDate) = :year', {
-        year: publicationYear,
-      });
-    }
-
-    qb.orderBy(sortBy, sortOrder)
-      .skip((page - 1) * limit)
-      .take(limit);
-
+    const qb = this.buildFindBooksQuery(dto);
     const [data, total] = await qb.getManyAndCount();
     const result: PaginatedBookDto = {
       total,
@@ -68,6 +39,18 @@ export class BooksService {
     return result;
   }
 
+  async findByIdThrowable(id: string): Promise<Book> {
+    const book = await this.findById(id);
+    if (!book) {
+      throw new NotFoundException('Book not found!');
+    }
+    return book;
+  }
+
+  async findById(id: string): Promise<Book | null> {
+    return await this.repository.findOneBy({ id });
+  }
+
   async create(bookData: BookCreationAttrs): Promise<Book> {
     const book = this.repository.create(bookData);
     const createdBook = await this.repository.save(book);
@@ -77,29 +60,62 @@ export class BooksService {
     return createdBook;
   }
 
-  async update(id: string, bookData: BookUpdateAttrs): Promise<void> {
-    if (!Object.keys(bookData).length) return;
+  async update(id: string, attrs: BookUpdateAttrs): Promise<Book> {
+    const book = await this.findByIdThrowable(id);
+    if (!Object.keys(attrs).length) return book;
 
-    const { affected } = await this.repository.update(id, bookData);
+    const updated = await this.repository.save({ ...book, ...attrs });
 
-    if (affected) {
-      await this.redisService.clear();
-    }
+    await this.redisService.clear();
+
+    return updated;
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<boolean> {
     const { affected } = await this.repository.delete(id);
 
     if (affected) {
       await this.redisService.clear();
     }
+
+    return !!affected;
   }
 
-  private getCacheKey(dto: GetBooksInputDto): string {
-    const key = Object.keys(dto)
-      .map((key) => `${key}:${dto[key]}`)
-      .join(':');
+  private buildFindBooksQuery(dto: GetBooksInputDto): SelectQueryBuilder<Book> {
+    const {
+      page = 1,
+      limit = 10,
+      title,
+      author,
+      publicationYear,
+      sortBy,
+      sortOrder,
+    } = dto;
 
-    return `books:${key}`;
+    const qb = this.repository
+      .createQueryBuilder('b')
+      .innerJoinAndSelect('b.author', 'a');
+
+    if (title) {
+      qb.andWhere('LOWER(b.title) LIKE LOWER(:title)', { title: `%${title}%` });
+    }
+
+    if (author) {
+      qb.andWhere('LOWER(a.name) LIKE LOWER(:author)', {
+        author: `%${author}%`,
+      });
+    }
+
+    if (publicationYear) {
+      qb.andWhere('EXTRACT(YEAR FROM b.publicationDate) = :year', {
+        year: publicationYear,
+      });
+    }
+
+    qb.orderBy(sortBy!, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    return qb;
   }
 }

@@ -1,26 +1,25 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import { QueryFailedError } from 'typeorm';
-import { Author } from '../authors/authors.entity';
+import { Author, AuthorUpdateAttrs } from '../authors/authors.entity';
 import { AuthorsService } from '../authors/authors.service';
+import { Book } from '../books/books.entity';
 import { CoreModule } from '../core/core.module';
 import { randomString } from '../core/core.utils';
 import { RedisService } from '../redis/redis.service';
-import { Book, BookUpdateAttrs } from './books.entity';
-import { BooksModule } from './books.module';
-import { BooksService } from './books.service';
-import { PaginatedBookDto } from './dto';
+import { AuthorsModule } from './authors.module';
+import { PaginatedAuthorDto } from './dto';
 
-describe('BooksService', () => {
+describe('AuthorsService', () => {
   let module: TestingModule;
-  let service: BooksService;
-  let authorsService: AuthorsService;
+  let service: AuthorsService;
   let redisService: RedisService;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
-      imports: [CoreModule, BooksModule],
+      imports: [CoreModule, AuthorsModule, TypeOrmModule.forFeature([Book])],
       providers: [
         {
           provide: RedisService,
@@ -33,8 +32,7 @@ describe('BooksService', () => {
       ],
     }).compile();
 
-    service = module.get(BooksService);
-    authorsService = module.get(AuthorsService);
+    service = module.get(AuthorsService);
     redisService = module.get(RedisService);
   });
 
@@ -44,8 +42,10 @@ describe('BooksService', () => {
 
   describe('update', () => {
     it('should return early because of empty obj', async () => {
-      const mocked = { id: '123' } as Book;
-
+      const mocked: Author = {
+        id: '123',
+        name: '1234',
+      };
       jest.spyOn(service, 'findByIdThrowable').mockResolvedValueOnce(mocked);
 
       const result = await service.update('123', {});
@@ -53,69 +53,47 @@ describe('BooksService', () => {
       expect(result).toEqual(mocked);
     });
 
-    it('should create and update a book', async () => {
+    it('should create and update an author', async () => {
       const randomStr = randomString();
-      const author = await authorsService.create({
+      const author = await service.create({
         name: `Author ${randomStr}`,
+        biography: 'Testing the application 3',
       });
-      const book = await service.create({
-        author,
-        title: `Title ${randomStr}`,
-        publicationDate: new Date(),
-        genre: 'Horror',
+      const updateAttrs: AuthorUpdateAttrs = {
+        biography: 'Testing the application 4',
+      };
+
+      const result = await service.update(author.id, updateAttrs);
+
+      expect(result).toEqual<Author>({
+        id: result.id,
+        name: author.name,
+        biography: updateAttrs.biography,
       });
-      const updateAttrs: BookUpdateAttrs = { genre: 'Thriller' };
-
-      await service.update(book.id, updateAttrs);
-
-      const { data } = await service.findAll({
-        author: randomStr,
-        title: randomStr,
-      });
-
-      expect(data).toEqual<Book[]>([
-        expect.objectContaining<Partial<Book>>({
-          id: book.id,
-          genre: updateAttrs.genre,
-        }) as Book,
-      ]);
     });
   });
 
   describe('findAll', () => {
-    it('should create and find a book', async () => {
+    it('should create and find an author', async () => {
       jest.spyOn(redisService, 'getCache').mockResolvedValueOnce(null);
 
       const randomStr = randomString();
-      const author = await authorsService.create({
+      const author = await service.create({
         name: `Author ${randomStr}`,
-      });
-      const book = await service.create({
-        author,
-        title: `Title ${randomStr}`,
-        publicationDate: new Date(),
-        genre: 'Horror',
+        biography: 'Testing the application 5',
       });
 
       const result = await service.findAll({
-        author: randomStr,
-        title: randomStr,
-        publicationYear: book.publicationDate.getFullYear(),
+        name: randomStr,
+        booksCount: 0,
       });
 
-      expect(result).toEqual<PaginatedBookDto>({
+      expect(result).toEqual<PaginatedAuthorDto>({
         total: 1,
         totalPages: 1,
         page: 1,
         pageSize: 10,
-        data: [
-          expect.objectContaining<Partial<Book>>({
-            id: book.id,
-            author: expect.objectContaining<Partial<Author>>({
-              id: author.id,
-            }) as Author,
-          }) as Book,
-        ],
+        data: [{ ...author, booksCount: 0 }],
       });
     });
 
@@ -143,28 +121,24 @@ describe('BooksService', () => {
   });
 
   describe('delete', () => {
-    it('should create and delete a book', async () => {
+    it('should create and delete an author', async () => {
       const spy = jest.spyOn(redisService, 'clear');
 
       const randomStr = randomString();
-      const author = await authorsService.create({
+      const author = await service.create({
         name: `Author ${randomStr}`,
-      });
-      const book = await service.create({
-        author,
-        title: `Title ${randomStr}`,
-        publicationDate: new Date(),
-        genre: 'Horror',
+        biography: 'Testing the application 6',
       });
 
-      await service.delete(book.id);
+      const result = await service.delete(author.id);
 
       const { data } = await service.findAll({
-        author: randomStr,
-        title: randomStr,
+        name: randomStr,
+        booksCount: 0,
       });
 
-      expect(data).toEqual<Book[]>([]);
+      expect(result).toBeTruthy();
+      expect(data).toEqual<Author[]>([]);
       expect(spy).toHaveBeenCalled();
     });
   });

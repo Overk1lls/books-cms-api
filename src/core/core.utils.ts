@@ -49,3 +49,15 @@ export function PaginatedFilterInput<SortEnumType>(
 
   return BasePaginatedFilterInput;
 }
+
+export function formCacheKeyByEntity(
+  entityName: string,
+  inputDto: Record<string, any>,
+): string {
+  const key = Object.keys(inputDto)
+    .map((key) => `${key}:${inputDto[key]}`)
+    .join(':');
+
+  return `${entityName}:${key}`;
+}
+

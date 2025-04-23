@@ -9,11 +9,6 @@ export class BookUpdateInputDto {
   title?: string;
 
   @Field({ nullable: true })
-  @IsString()
-  @IsOptional()
-  author?: string;
-
-  @Field({ nullable: true })
   @IsDateString()
   @IsOptional()
   publicationDate?: Date;
