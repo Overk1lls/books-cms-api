@@ -42,7 +42,7 @@ jobs:
         run: bash ./.github/scripts/setup-env.sh
 
       - name: Start and wait for Docker services
-        run: docker compose up -d && docker compose wait
+        run: docker compose up -d && docker compose wait postgres redis
 
   lint:
     runs-on: ubuntu-latest
