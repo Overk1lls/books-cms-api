@@ -3,4 +3,5 @@ import { AppEnvConfig } from '../config.types';
 
 export default Joi.object<AppEnvConfig>({
   PORT: Joi.number().default(3000),
+  JWT_SECRET: Joi.string().required(),
 });

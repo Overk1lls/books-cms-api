@@ -1,5 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Roles } from '../auth/roles';
 import { AuthorsService } from '../authors/authors.service';
+import { UserRole } from '../users/users.enum';
 import { Book } from './books.entity';
 import { BooksService } from './books.service';
 import {
@@ -30,14 +32,14 @@ export class BooksResolver {
     return await this.booksService.findById(id);
   }
 
+  @Roles(UserRole.admin)
   @Mutation(() => Book)
-  async createBook(
-    @Args('bookCreationInput') dto: BookCreationInputDto,
-  ): Promise<Book> {
+  async createBook(@Args('input') dto: BookCreationInputDto): Promise<Book> {
     const author = await this.authorsService.findByIdThrowable(dto.authorId);
     return await this.booksService.create({ ...dto, author });
   }
 
+  @Roles(UserRole.admin)
   @Mutation(() => Book)
   async updateBook(
     @Args('id') id: string,
@@ -46,6 +48,7 @@ export class BooksResolver {
     return await this.booksService.update(id, input);
   }
 
+  @Roles(UserRole.admin)
   @Mutation(() => Boolean)
   async deleteBook(@Args('id') id: string): Promise<boolean> {
     return await this.booksService.delete(id);
