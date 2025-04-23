@@ -1,4 +1,7 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ExtendedConfigModule } from '../config/config.module';
+import { RedisFactoryService } from './redis.factory';
 import { RedisService } from './redis.service';
 
 describe('RedisService', () => {
@@ -6,6 +9,13 @@ describe('RedisService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ExtendedConfigModule,
+        CacheModule.registerAsync({
+          isGlobal: true,
+          useClass: RedisFactoryService,
+        }),
+      ],
       providers: [RedisService],
     }).compile();
 

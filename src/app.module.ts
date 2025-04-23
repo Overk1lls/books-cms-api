@@ -4,7 +4,6 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BooksModule } from './books/books.module';
 import { ExtendedConfigModule } from './config/config.module';
@@ -32,7 +31,6 @@ import { UsersModule } from './users/users.module';
       playground: process.env.NODE_ENV !== 'production',
     }),
   ],
-  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
