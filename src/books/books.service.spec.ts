@@ -1,6 +1,7 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
+import { QueryFailedError } from 'typeorm';
 import { Author } from '../authors/authors.entity';
 import { AuthorsService } from '../authors/authors.service';
 import { CoreModule } from '../core/core.module';
@@ -15,7 +16,6 @@ describe('BooksService', () => {
   let module: TestingModule;
   let service: BooksService;
   let authorsService: AuthorsService;
-  let bookRepo: Repository<Book>;
   let redisService: RedisService;
 
   beforeAll(async () => {
@@ -35,12 +35,51 @@ describe('BooksService', () => {
 
     service = module.get(BooksService);
     authorsService = module.get(AuthorsService);
-    bookRepo = module.get<Repository<Book>>(getRepositoryToken(Book));
     redisService = module.get(RedisService);
   });
 
   afterAll(async () => {
     await module.close();
+  });
+
+  describe('update', () => {
+    it('should return early because of empty obj', async () => {
+      const mocked = { id: '123' } as Book;
+
+      jest.spyOn(service, 'findByIdThrowable').mockResolvedValueOnce(mocked);
+
+      const result = await service.update('123', {});
+
+      expect(result).toEqual(mocked);
+    });
+
+    it('should create and update a book', async () => {
+      const randomStr = randomString();
+      const author = await authorsService.create({
+        name: `Author ${randomStr}`,
+      });
+      const book = await service.create({
+        author,
+        title: `Title ${randomStr}`,
+        publicationDate: new Date(),
+        genre: 'Horror',
+      });
+      const updateAttrs: BookUpdateAttrs = { genre: 'Thriller' };
+
+      await service.update(book.id, updateAttrs);
+
+      const { data } = await service.findAll({
+        author: randomStr,
+        title: randomStr,
+      });
+
+      expect(data).toEqual<Book[]>([
+        expect.objectContaining<Partial<Book>>({
+          id: book.id,
+          genre: updateAttrs.genre,
+        }) as Book,
+      ]);
+    });
   });
 
   describe('findAll', () => {
@@ -89,44 +128,17 @@ describe('BooksService', () => {
     });
   });
 
-  describe('update', () => {
-    it('should return early because of empty obj', async () => {
-      const spy = jest.spyOn(bookRepo, 'update');
+  describe('findByIdThrowable', () => {
+    it('should throw because of invalid UUID', async () => {
+      const invokeFn = () => service.findByIdThrowable('123');
 
-      await service.update('123', {});
-
-      expect(spy).not.toHaveBeenCalledWith<[string, BookUpdateAttrs]>(
-        '123',
-        {},
-      );
+      await expect(invokeFn).rejects.toThrow(QueryFailedError);
     });
 
-    it('should create and update a book', async () => {
-      const randomStr = randomString();
-      const author = await authorsService.create({
-        name: `Author ${randomStr}`,
-      });
-      const book = await service.create({
-        author,
-        title: `Title ${randomStr}`,
-        publicationDate: new Date(),
-        genre: 'Horror',
-      });
-      const updateAttrs: BookUpdateAttrs = { genre: 'Thriller' };
+    it('should throw because of not found', async () => {
+      const invokeFn = () => service.findByIdThrowable(randomUUID());
 
-      await service.update(book.id, updateAttrs);
-
-      const { data } = await service.findAll({
-        author: randomStr,
-        title: randomStr,
-      });
-
-      expect(data).toEqual<Book[]>([
-        expect.objectContaining<Partial<Book>>({
-          id: book.id,
-          genre: updateAttrs.genre,
-        }) as Book,
-      ]);
+      await expect(invokeFn).rejects.toThrow(NotFoundException);
     });
   });
 

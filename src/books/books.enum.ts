@@ -1,9 +1,10 @@
 import { registerEnumType } from '@nestjs/graphql';
 
 export enum BookSortableFields {
-  title = 'title',
-  genre = 'genre',
-  publicationDate = 'publication_date',
+  title = 'b.title',
+  genre = 'b.genre',
+  publicationDate = 'b.publication_date',
+  author = 'a.name',
 }
 
 registerEnumType(BookSortableFields, {

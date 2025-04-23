@@ -4,6 +4,7 @@ import { Book } from './books.entity';
 import { BooksService } from './books.service';
 import {
   BookCreationInputDto,
+  BookUpdateInputDto,
   GetBooksInputDto,
   PaginatedBookDto,
 } from './dto';
@@ -22,9 +23,31 @@ export class BooksResolver {
     return await this.booksService.findAll(dto);
   }
 
+  @Query(() => Book, { nullable: true })
+  async book(
+    @Args('id', { type: () => String }) id: string,
+  ): Promise<Book | null> {
+    return await this.booksService.findById(id);
+  }
+
   @Mutation(() => Book)
-  async createBook(@Args('bookCreationInput') dto: BookCreationInputDto): Promise<Book> {
+  async createBook(
+    @Args('bookCreationInput') dto: BookCreationInputDto,
+  ): Promise<Book> {
     const author = await this.authorsService.findByIdThrowable(dto.authorId);
     return await this.booksService.create({ ...dto, author });
+  }
+
+  @Mutation(() => Book)
+  async updateBook(
+    @Args('id') id: string,
+    @Args('input') input: BookUpdateInputDto,
+  ): Promise<Book> {
+    return await this.booksService.update(id, input);
+  }
+
+  @Mutation(() => Boolean)
+  async deleteBook(@Args('id') id: string): Promise<boolean> {
+    return await this.booksService.delete(id);
   }
 }

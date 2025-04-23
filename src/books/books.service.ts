@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { formCacheKeyByEntity } from '../core/core.utils';
 import { RedisService } from '../redis/redis.service';
 import { Book, BookCreationAttrs, BookUpdateAttrs } from './books.entity';
-import { BookSortableFields } from './books.enum';
 import { GetBooksInputDto, PaginatedBookDto } from './dto';
 
 @Injectable()
@@ -16,21 +16,81 @@ export class BooksService {
   ) {}
 
   async findAll(dto: GetBooksInputDto): Promise<PaginatedBookDto> {
-    const {
-      limit = 10,
-      page = 1,
-      sortBy = BookSortableFields.title,
-      sortOrder = 'ASC',
-      title,
-      author,
-      publicationYear,
-    } = dto;
+    const { limit = 10, page = 1 } = dto;
 
-    const cacheKey = this.getCacheKey(dto);
+    const cacheKey = formCacheKeyByEntity('books', dto);
     const cached = await this.redisService.getCache<PaginatedBookDto>(cacheKey);
     if (cached) {
       return cached;
     }
+
+    const qb = this.buildFindBooksQuery(dto);
+    const [data, total] = await qb.getManyAndCount();
+    const result: PaginatedBookDto = {
+      total,
+      page,
+      pageSize: limit,
+      totalPages: Math.ceil((total ?? 0) / limit),
+      data: data ?? [],
+    };
+
+    await this.redisService.setCache(cacheKey, result, 300);
+
+    return result;
+  }
+
+  async findByIdThrowable(id: string): Promise<Book> {
+    const book = await this.findById(id);
+    if (!book) {
+      throw new NotFoundException('Book not found!');
+    }
+    return book;
+  }
+
+  async findById(id: string): Promise<Book | null> {
+    return await this.repository.findOneBy({ id });
+  }
+
+  async create(bookData: BookCreationAttrs): Promise<Book> {
+    const book = this.repository.create(bookData);
+    const createdBook = await this.repository.save(book);
+
+    await this.redisService.clear();
+
+    return createdBook;
+  }
+
+  async update(id: string, attrs: BookUpdateAttrs): Promise<Book> {
+    const book = await this.findByIdThrowable(id);
+    if (!Object.keys(attrs).length) return book;
+
+    const updated = await this.repository.save({ ...book, ...attrs });
+
+    await this.redisService.clear();
+
+    return updated;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const { affected } = await this.repository.delete(id);
+
+    if (affected) {
+      await this.redisService.clear();
+    }
+
+    return !!affected;
+  }
+
+  private buildFindBooksQuery(dto: GetBooksInputDto): SelectQueryBuilder<Book> {
+    const {
+      page = 1,
+      limit = 10,
+      title,
+      author,
+      publicationYear,
+      sortBy,
+      sortOrder,
+    } = dto;
 
     const qb = this.repository
       .createQueryBuilder('b')
@@ -52,56 +112,10 @@ export class BooksService {
       });
     }
 
-    qb.orderBy(`b.${sortBy}`, sortOrder)
+    qb.orderBy(sortBy!, sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
 
-    const [data, total] = await qb.getManyAndCount();
-    const result: PaginatedBookDto = {
-      total,
-      page,
-      pageSize: limit,
-      totalPages: Math.ceil((total ?? 0) / limit),
-      data: data ?? [],
-    };
-
-    await this.redisService.setCache(cacheKey, result, 300);
-
-    return result;
-  }
-
-  async create(bookData: BookCreationAttrs): Promise<Book> {
-    const book = this.repository.create(bookData);
-    const createdBook = await this.repository.save(book);
-
-    await this.redisService.clear();
-
-    return createdBook;
-  }
-
-  async update(id: string, bookData: BookUpdateAttrs): Promise<void> {
-    if (!Object.keys(bookData).length) return;
-
-    const { affected } = await this.repository.update(id, bookData);
-
-    if (affected) {
-      await this.redisService.clear();
-    }
-  }
-
-  async delete(id: string): Promise<void> {
-    const { affected } = await this.repository.delete(id);
-
-    if (affected) {
-      await this.redisService.clear();
-    }
-  }
-
-  private getCacheKey(dto: GetBooksInputDto): string {
-    const key = Object.keys(dto)
-      .map((key) => `${key}:${dto[key]}`)
-      .join(':');
-
-    return `books:${key}`;
+    return qb;
   }
 }

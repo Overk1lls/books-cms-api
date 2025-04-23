@@ -6,7 +6,11 @@ import { Book } from './books.entity';
 import { BookSortableFields } from './books.enum';
 import { BooksResolver } from './books.resolver';
 import { BooksService } from './books.service';
-import { BookCreationInputDto, GetBooksInputDto } from './dto';
+import {
+  BookCreationInputDto,
+  BookUpdateInputDto,
+  GetBooksInputDto,
+} from './dto';
 import { PaginatedBookDto } from './dto/paginated-book.dto';
 
 describe('BooksResolver', () => {
@@ -22,7 +26,10 @@ describe('BooksResolver', () => {
           provide: BooksService,
           useValue: {
             findAll: jest.fn(),
+            findById: jest.fn(),
             create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
           },
         },
         {
@@ -70,6 +77,17 @@ describe('BooksResolver', () => {
     });
   });
 
+  describe('book', () => {
+    it('should can booksService.findById with correct arguments', async () => {
+      const spy = jest.spyOn(service, 'findById').mockResolvedValueOnce(null);
+
+      const response = await resolver.book('123');
+
+      expect(spy).toHaveBeenCalledWith('123');
+      expect(response).toBeNull();
+    });
+  });
+
   describe('createBook', () => {
     it('should call booksService.create with correct arguments', async () => {
       const dto: BookCreationInputDto = {
@@ -92,6 +110,47 @@ describe('BooksResolver', () => {
 
       expect(spy).toHaveBeenCalledWith(dto);
       expect(response).toEqual(result);
+    });
+  });
+
+  describe('updateBook', () => {
+    it('should call booksService.update with correct arguments', async () => {
+      const dto: BookUpdateInputDto = {
+        title: 'test title',
+        genre: 'test',
+        publicationDate: new Date(),
+      };
+      const result: Book = {
+        id: randomUUID(),
+        title: dto.title!,
+        publicationDate: dto.publicationDate!,
+        genre: dto.genre,
+        author: {
+          id: randomUUID(),
+          name: `Author ${randomString()}`,
+        },
+      };
+
+      const spy = jest.spyOn(service, 'update').mockResolvedValueOnce(result);
+
+      const response = await resolver.updateBook(result.id, dto);
+
+      expect(spy).toHaveBeenCalledWith<[string, BookUpdateInputDto]>(
+        result.id,
+        dto,
+      );
+      expect(response).toEqual(result);
+    });
+  });
+
+  describe('deleteBook', () => {
+    it('should call booksService.delete with correct arguments', async () => {
+      const spy = jest.spyOn(service, 'delete').mockResolvedValueOnce(true);
+
+      const response = await resolver.deleteBook('1234');
+
+      expect(spy).toHaveBeenCalledWith<[string]>('1234');
+      expect(response).toBeTruthy();
     });
   });
 });
