@@ -14,7 +14,6 @@ import redisValidation from './redis/redis.validation';
     ConfigModule.forRoot({
       cache: true,
       isGlobal: true,
-      envFilePath: '.env',
       load: [appConfig, awsConfig, dbConfig, redisConfig],
       validationSchema: appValidation
         .concat(awsValidation)
