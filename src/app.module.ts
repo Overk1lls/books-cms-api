@@ -6,9 +6,10 @@ import { CoreModule } from './core/core.module';
 import { GraphqlThrottlerGuard } from './core/guards';
 import { DbService } from './db/db.service';
 import { HealthModule } from './health/health.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
-  imports: [CoreModule, BooksModule, AuthModule, HealthModule],
+  imports: [CoreModule, BooksModule, AuthModule, HealthModule, ReviewsModule],
   providers: [
     DbService,
     {
