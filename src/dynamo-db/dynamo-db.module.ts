@@ -2,6 +2,7 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GlobalAppConfig } from '../config/config.types';
+import { DynamoDbService } from './dynamo-db.service';
 
 @Global()
 @Module({})
@@ -11,6 +12,7 @@ export class DynamoDbModule {
       global: true,
       module: DynamoDbModule,
       providers: [
+        DynamoDbService,
         {
           provide: DynamoDB,
           useFactory: (configService: ConfigService<GlobalAppConfig, true>) => {
@@ -29,7 +31,7 @@ export class DynamoDbModule {
           inject: [ConfigService],
         },
       ],
-      exports: [DynamoDB],
+      exports: [DynamoDbService, DynamoDB],
     };
   }
 }

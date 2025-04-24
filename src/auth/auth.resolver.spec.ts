@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ExtendedConfigModule } from '../config/config.module';
 import { User } from '../users/users.entity';
 import { UserRole } from '../users/users.enum';
 import { UsersService } from '../users/users.service';
@@ -14,6 +15,7 @@ describe('AuthResolver', () => {
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
+      imports: [ExtendedConfigModule],
       providers: [
         AuthResolver,
         {
