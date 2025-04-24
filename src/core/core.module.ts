@@ -27,18 +27,32 @@ import { RedisFactoryService } from '../redis/redis.factory';
       useClass: RedisFactoryService,
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
       autoSchemaFile:
         process.env.NODE_ENV === 'test'
           ? true
           : join(process.cwd(), 'src/schema.gql'),
-      driver: ApolloDriver,
-      introspection: true,
+      introspection: process.env.NODE_ENV !== 'production',
       playground: false,
-      plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true })],
+      plugins:
+        process.env.NODE_ENV === 'production'
+          ? []
+          : [ApolloServerPluginLandingPageLocalDefault()],
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,
       }),
+      formatError: (error) => {
+        const isProd = process.env.NODE_ENV === 'production';
+
+        return {
+          message: error.message,
+          extensions: {
+            ...error.extensions,
+            ...(isProd ? {} : { stacktrace: error.extensions?.stacktrace }),
+          },
+        };
+      },
     }),
     ThrottlerModule.forRootAsync({
       useFactory: (configService: ConfigService<GlobalAppConfig, true>) => ({

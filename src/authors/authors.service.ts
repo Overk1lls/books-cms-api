@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { formCacheKeyByEntity } from '../core/core.utils';
+import { formCacheKeyByEntity, isPgQueryConflictError } from '../core/core.utils';
 import { RedisService } from '../redis/redis.service';
 import { Author, AuthorUpdateAttrs } from './authors.entity';
 import { AuthorCreationInputDto, PaginatedAuthorDto } from './dto';
@@ -17,8 +21,15 @@ export class AuthorsService {
   ) {}
 
   async create(input: AuthorCreationInputDto): Promise<Author> {
-    const author = this.repository.create(input);
-    return await this.repository.save(author);
+    try {
+      const author = this.repository.create(input);
+      return await this.repository.save(author);
+    } catch (error) {
+      if (isPgQueryConflictError(error as Error)) {
+        throw new ConflictException('Author with such name already exists!');
+      }
+      throw error;
+    }
   }
 
   async update(id: string, attrs: AuthorUpdateAttrs): Promise<Author> {

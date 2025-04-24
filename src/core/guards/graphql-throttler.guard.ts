@@ -17,7 +17,7 @@ import { UserRole } from '../../users/users.enum';
 import { GqlContext, GqRequest } from '../interfaces';
 
 @Injectable()
-export class CustomThrottlerGuard extends ThrottlerGuard {
+export class GraphqlThrottlerGuard extends ThrottlerGuard {
   constructor(
     options: ThrottlerModuleOptions,
     storageService: ThrottlerStorageService,
