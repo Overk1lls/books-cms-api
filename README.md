@@ -26,11 +26,40 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Table of contents
+1. [Project setup](#project-setup)
+2. [Compile and run the project](#compile-and-run-the-project)
+3. [Run tests](#run-tests)
+4. [Request examples](#request-examples)
+    1. [Mutations](#mutations)
+    2. [Queries](#queries)
+
 ## Project setup
 
-```bash
-$ yarn install
-```
+* Prepare `.env`:
+  * On Unix:
+  ```bash
+  cp .env.example .env
+  ```
+  * On Windows:
+  ```bash
+  copy .env.example .env
+  ```
+
+* Install dependencies:
+  ```bash
+  yarn install
+  ```
+
+* Start the Docker containers (`docker-compose.yml`):
+  ```bash
+  docker compose up -d
+  ```
+
+* Migrate the database:
+  ```bash
+  yarn migrations:run
+  ```
 
 ## Compile and run the project
 
@@ -58,41 +87,295 @@ $ yarn run test:e2e
 $ yarn run test:cov
 ```
 
-## Deployment
+## Request examples
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Pay attention that **you need a JWT** to perform any query or mutation. The email below (`test@gmail.com`) will be an admin upon registration.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Mutations
 
-```bash
-$ yarn install -g mau
-$ mau deploy
+<details>
+
+#### Users
+
+<details>
+
+1. `register()`:
+```graphql
+mutation {
+  register(input: {
+    email: "test@gmail.com"
+    password: "qwerty"
+  }) {
+    id
+    email
+    role
+  }
+}
+```
+The email must be unique.
+
+2. `login()`:
+```graphql
+mutation {
+  login(input: {
+    email: "test@gmail.com"
+    password: "qwerty"
+  }) {
+    accessToken
+  }
+}
+```
+Get the JWT from response and add the `Authorization` header as `Bearer token_here`.
+
+3. `makeUserAdmin()`:
+```graphql
+mutation {
+  makeUserAdmin(input: {
+    userId: "111da7d6-330d-4eaa-b283-b81e5c00665b"
+  }) {
+    id
+    email
+    role
+  }
+}
+```
+You cannot make yourself an admin. **You need to be `admin`** to create/update/delete entities.
+
+</details>
+
+#### Authors
+
+<details>
+
+1. `createAuthor()`:
+```graphql
+mutation {
+  createAuthor(input: {
+    name: "Test Author 1"
+    biography: "Test biography"
+  }) {
+    id
+    name
+    biography
+  }
+}
+```
+Name must be unique.
+
+2. `updateAuthor()`:
+```graphql
+mutation {
+  updateAuthor(id: "7a63b138-970e-4178-949c-3af099c3aac0", input: {
+    name: "Test Author 1 Edited"
+    biography: "Test biography edited"
+  }) {
+    id
+    name
+    biography 
+  }
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+3. `deleteAuthor()`:
+```graphql
+mutation {
+  deleteAuthor(id: "7a63b138-970e-4178-949c-3af099c3aac0")
+}
+```
 
-## Resources
+</details>
 
-Check out a few resources that may come in handy when working with NestJS:
+#### Books
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+<details>
 
-## Support
+1. `createBook()`:
+```graphql
+mutation {
+  createBook(input: {
+    authorId: "de7d6b9e-210b-4247-8820-3127ae1e1074"
+    title: "Test Book 1"
+    publicationDate: "2025-04-24T15:16:50.814Z"
+    genre: "Horror"
+  }) {
+    id
+    title
+    genre
+    publicationDate
+    author {
+      id
+      name
+      biography
+    }
+  }
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+2. `updateBook()`:
+```graphql
+mutation {
+  updateBook(id: "fdce3070-93f3-4ae3-befd-0d1886c2d412", input: {
+    title: "Test Book 1 Edited"
+    genre: "Thriller"
+  }) {
+    id
+    title
+    genre
+    publicationDate
+    author {
+      id
+      name
+      biography
+    }
+  }
+}
+```
 
-## Stay in touch
+3. `deleteBook()`:
+```graphql
+mutation {
+  deleteBook(id: "fdce3070-93f3-4ae3-befd-0d1886c2d412")
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+</details>
+
+</details>
+
+### Queries
+
+<details>
+
+#### Authors
+
+<details>
+
+1. `author()`:
+```graphql
+query {
+  author(id: "de7d6b9e-210b-4247-8820-3127ae1e1074") {
+    id
+    name
+    biography
+    booksCount
+  }
+}
+```
+
+2. `getAuthors()`:
+```graphql
+query {
+  getAuthors(input: {
+    booksCount: 1
+    name: "Test"
+    sortBy: name
+    sortOrder: "ASC"
+    limit: 10
+    page: 1
+  }) {
+    data {
+      id
+      name
+      biography
+      booksCount
+    }
+    page
+    pageSize
+    total
+    totalPages
+  }
+}
+```
+
+</details>
+
+#### Books
+
+<details>
+
+1. `book()`:
+```graphql
+query {
+  book(id: "a9c0cb45-fe75-4e66-9a57-43af53fd781e") {
+    id
+    title
+    genre
+    publicationDate
+    author {
+      id
+      name
+      biography
+    }
+  }
+}
+```
+
+2. `getBooks()`:
+```graphql
+query {
+  getBooks(input: {
+    author: "Test"
+    title: "Test"
+    publicationYear: 2025
+    sortBy: title
+    sortOrder: "ASC"
+    limit: 10
+    page: 1
+  }) {
+    data {
+      id
+      title
+      genre
+      publicationDate
+      author {
+        id
+        name
+        biography
+      }
+    }
+    page
+    pageSize
+    total
+    totalPages
+  }
+}
+```
+
+</details>
+
+#### Users
+
+<details>
+
+1. `me()`:
+```graphql
+query {
+  me {
+    id
+    email
+    role
+  }
+}
+```
+
+2. `getUser()`:
+```graphql
+query {
+  getUser(input: {
+    id: "7c5ef962-3250-4d36-8aed-163d4b6e57d3"
+    email: "test@gmail.com"
+  }) {
+    id
+    email
+    role
+  }
+}
+```
+By email or by ID.
+
+</details>
+
+</details>
 
 ## License
 

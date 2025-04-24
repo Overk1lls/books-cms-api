@@ -1,5 +1,8 @@
+import { Inject } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import appConfig, { AppConfig } from '../config/app/app.config';
 import { User } from '../users/users.entity';
+import { UserRole } from '../users/users.enum';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 import { JwtResponseDto, LoginInputDto, RegisterInputDto } from './dto';
@@ -7,6 +10,8 @@ import { JwtResponseDto, LoginInputDto, RegisterInputDto } from './dto';
 @Resolver()
 export class AuthResolver {
   constructor(
+    @Inject(appConfig.KEY) private readonly config: AppConfig,
+
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
   ) {}
@@ -17,6 +22,11 @@ export class AuthResolver {
     return await this.usersService.create({
       email: dto.email,
       password: hashedPassword,
+      // for testing purposes only
+      role:
+        dto.email === this.config.initialAdminEmail
+          ? UserRole.admin
+          : UserRole.user,
     });
   }
 

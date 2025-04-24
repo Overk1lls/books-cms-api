@@ -1,5 +1,11 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
-import { IsDateString, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 @InputType()
 export class BookCreationInputDto {
@@ -14,10 +20,12 @@ export class BookCreationInputDto {
   authorId: string;
 
   @Field()
-  @IsDateString()
+  @IsDate()
   @IsNotEmpty()
   publicationDate: Date;
 
   @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
   genre?: string;
 }

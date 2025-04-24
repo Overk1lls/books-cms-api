@@ -64,7 +64,8 @@ export class BooksService {
     const book = await this.findByIdThrowable(id);
     if (!Object.keys(attrs).length) return book;
 
-    const updated = await this.repository.save({ ...book, ...attrs });
+    const merged = this.repository.merge(book, attrs);
+    const updated = await this.repository.save(merged);
 
     await this.redisService.clear();
 

@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { formCacheKeyByEntity, isPgQueryConflictError } from '../core/core.utils';
+import {
+  formCacheKeyByEntity,
+  isPgQueryConflictError,
+} from '../core/core.utils';
 import { RedisService } from '../redis/redis.service';
 import { Author, AuthorUpdateAttrs } from './authors.entity';
 import { AuthorCreationInputDto, PaginatedAuthorDto } from './dto';
@@ -36,7 +39,8 @@ export class AuthorsService {
     const author = await this.findByIdThrowable(id);
     if (!Object.keys(attrs).length) return author;
 
-    const updated = await this.repository.save({ ...author, ...attrs });
+    const merged = this.repository.merge(author, attrs);
+    const updated = await this.repository.save(merged);
 
     await this.redisService.clear();
 
