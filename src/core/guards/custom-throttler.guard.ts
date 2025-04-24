@@ -1,4 +1,9 @@
-import { ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import {
+  ContextType,
+  ExecutionContext,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import {
@@ -6,6 +11,7 @@ import {
   ThrottlerModuleOptions,
   ThrottlerStorageService,
 } from '@nestjs/throttler';
+import { Request, Response } from 'express';
 import appConfig, { AppConfig } from '../../config/app/app.config';
 import { UserRole } from '../../users/users.enum';
 import { GqlContext, GqRequest } from '../interfaces';
@@ -24,10 +30,17 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   }
 
   protected getRequestResponse(context: ExecutionContext): GqlContext {
-    const ctx = GqlExecutionContext.create(context);
-    const { req, res } = ctx.getContext<GqlContext>();
-
-    return { req, res };
+    const type = context.getType<ContextType | 'graphql'>();
+    if (type === 'graphql') {
+      const ctx = GqlExecutionContext.create(context);
+      const { req, res } = ctx.getContext<GqlContext>();
+      return { req, res };
+    } else {
+      const ctx = context.switchToHttp();
+      const req = ctx.getRequest<Request>();
+      const res = ctx.getResponse<Response>();
+      return { req, res } as GqlContext;
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

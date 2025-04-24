@@ -12,6 +12,7 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
+  app.enableShutdownHooks();
 
   const { port } = app.get<AppConfig>(appConfig.KEY);
 
