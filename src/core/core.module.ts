@@ -1,3 +1,5 @@
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
@@ -5,11 +7,11 @@ import { ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { join } from 'path';
 import { ExtendedConfigModule } from '../config/config.module';
 import { GlobalAppConfig } from '../config/config.types';
-import { TypeOrmFactoryService } from '../config/db/db.factory';
+import { TypeOrmFactoryService } from '../db/db.factory';
 import { DynamoDbModule } from '../dynamo-db/dynamo-db.module';
 import { RedisFactoryService } from '../redis/redis.factory';
 
@@ -31,11 +33,19 @@ import { RedisFactoryService } from '../redis/redis.factory';
           : join(process.cwd(), 'src/schema.gql'),
       driver: ApolloDriver,
       introspection: true,
-      playground: process.env.NODE_ENV !== 'production',
-      context: ({ req }: { req: Request }) => ({ req }),
+      playground: false,
+      plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true })],
+      context: ({ req, res }: { req: Request; res: Response }) => ({
+        req,
+        res,
+      }),
     }),
     ThrottlerModule.forRootAsync({
       useFactory: (configService: ConfigService<GlobalAppConfig, true>) => ({
+        storage: new ThrottlerStorageRedisService({
+          host: configService.get('redis.host', { infer: true }),
+          port: configService.get('redis.port', { infer: true }),
+        }),
         throttlers: [
           {
             ttl: configService.get('app.rateLimitTtl', { infer: true }),
