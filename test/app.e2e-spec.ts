@@ -1,25 +1,48 @@
-import { INestApplication } from '@nestjs/common';
+import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
+import appConfig, { AppConfig } from '../src/config/app/app.config';
 
-describe('AppController (e2e)', () => {
+describe('App (e2e)', () => {
   let app: INestApplication<App>;
+  let config: AppConfig;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    config = module.get<AppConfig>(appConfig.KEY);
+
+    app = module.createNestApplication();
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('Rate Limiting', () => {
+    it('should throttle requests after exceeding the limit', async () => {
+      const client = request(app.getHttpServer());
+
+      for (let i = 0; i < config.rateLimitUnauth; i++) {
+        await client
+          .post('/graphql')
+          .send({ query: '{ __typename }' })
+          .expect(HttpStatus.OK);
+      }
+
+      const result = await client
+        .post('/graphql')
+        .send({ query: '{ __typename }' })
+        .expect(HttpStatus.TOO_MANY_REQUESTS);
+
+      expect((result.body as { message: string }).message).toContain(
+        'Too many requests',
+      );
+    });
   });
 });
