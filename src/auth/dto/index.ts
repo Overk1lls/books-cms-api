@@ -1,4 +1,3 @@
-export * from './jwt-auth.dto';
 export * from './jwt-payload.dto';
 export * from './jwt-response.dto';
 export * from './jwt-user.dto';

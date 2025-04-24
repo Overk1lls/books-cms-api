@@ -20,10 +20,10 @@ export class UsersResolver {
 
   @Query(() => User)
   async me(@CurrentUser() currentUser: JwtUserDto): Promise<User> {
-    return (await this.usersService.findById(currentUser.userId)) as User;
+    return await this.usersService.findByIdThrowable(currentUser.userId);
   }
 
-  @Query(() => User)
+  @Query(() => User, { nullable: true })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.admin)
   async getUser(@Args('input') input: GetUserInputDto): Promise<User | null> {

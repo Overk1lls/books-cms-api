@@ -1,5 +1,4 @@
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
-import bcrypt from 'bcrypt';
 import { User } from '../users/users.entity';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
@@ -14,7 +13,7 @@ export class AuthResolver {
 
   @Mutation(() => User)
   async register(@Args('input') dto: RegisterInputDto): Promise<User> {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await this.authService.hashPassword(dto.password);
     return await this.usersService.create({
       email: dto.email,
       password: hashedPassword,
