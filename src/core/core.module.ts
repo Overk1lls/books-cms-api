@@ -3,6 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Request } from 'express';
 import { join } from 'path';
 import { ExtendedConfigModule } from '../config/config.module';
 import { TypeOrmFactoryService } from '../config/db/db.factory';
@@ -15,7 +16,6 @@ import { RedisFactoryService } from '../redis/redis.factory';
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmFactoryService,
     }),
-
     DynamoDbModule.forRoot(),
     CacheModule.registerAsync({
       isGlobal: true,
@@ -26,6 +26,7 @@ import { RedisFactoryService } from '../redis/redis.factory';
       driver: ApolloDriver,
       introspection: true,
       playground: process.env.NODE_ENV !== 'production',
+      context: ({ req }: { req: Request }) => ({ req }),
     }),
   ],
 })

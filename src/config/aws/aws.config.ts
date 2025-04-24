@@ -8,7 +8,7 @@ export interface AwsConfig {
 }
 
 export default registerAs<AwsConfig, () => AwsConfig>(
-  ConfigNamespace.APP,
+  ConfigNamespace.AWS,
   () => ({
     region: process.env.AWS_REGION!,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,

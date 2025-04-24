@@ -13,6 +13,7 @@ export interface GlobalAppConfig {
 
 export interface AppEnvConfig {
   PORT: number;
+  JWT_SECRET: string;
 
   DB_HOST: string;
   DB_PORT_WRITE: string;
