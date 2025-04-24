@@ -9,5 +9,6 @@ import { BooksService } from './books.service';
 @Module({
   imports: [AuthorsModule, RedisModule, TypeOrmModule.forFeature([Book])],
   providers: [BooksService, BooksResolver],
+  exports: [BooksService],
 })
 export class BooksModule {}
