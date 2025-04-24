@@ -6,6 +6,7 @@ import {
   ReturnTypeFuncValue,
 } from '@nestjs/graphql';
 import { IsEnum, IsOptional } from 'class-validator';
+import { QueryFailedError } from 'typeorm';
 import { BasePaginationInputDto } from './dto';
 
 export const randomString = () => (Math.random() + 1).toString(36).substring(2);
@@ -60,3 +61,13 @@ export function formCacheKeyByEntity(
 
   return `${entityName}:${key}`;
 }
+
+export const isPgQueryConflictError = (error: Error): boolean =>
+  isPgErrorWithCode(error) &&
+  ['23505', 'ER_DUP_ENTRY', '1062'].includes(error.driverError.code);
+
+export const isPgErrorWithCode = (
+  error: unknown,
+): error is QueryFailedError<Error & { code: string }> =>
+  error instanceof QueryFailedError &&
+  typeof (error.driverError as { code?: string })?.code === 'string';

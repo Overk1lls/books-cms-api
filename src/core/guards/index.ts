@@ -1,1 +1,1 @@
-export * from './custom-throttler.guard';
+export * from './graphql-throttler.guard';

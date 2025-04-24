@@ -3,7 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { BooksModule } from './books/books.module';
 import { CoreModule } from './core/core.module';
-import { CustomThrottlerGuard } from './core/guards';
+import { GraphqlThrottlerGuard } from './core/guards';
 import { DbService } from './db/db.service';
 import { HealthModule } from './health/health.module';
 
@@ -13,7 +13,7 @@ import { HealthModule } from './health/health.module';
     DbService,
     {
       provide: APP_GUARD,
-      useClass: CustomThrottlerGuard,
+      useClass: GraphqlThrottlerGuard,
     },
   ],
 })
