@@ -1,13 +1,17 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
 @Injectable()
-export class RedisService {
+export class RedisService implements OnApplicationShutdown {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cache: Cache,
   ) {}
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.cache.disconnect();
+  }
 
   async setCache<T = unknown>(
     key: string,

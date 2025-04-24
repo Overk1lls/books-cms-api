@@ -16,12 +16,20 @@ const config: Config = {
     'main.ts',
     'db.data-source.ts',
     '\\.types\\.ts',
+    '\\.module\\.ts',
     'dto',
+    'interfaces',
+    'guards',
   ],
   collectCoverageFrom: [
     'src/**/*.(t|j)s'
   ],
   coverageDirectory: './coverage',
+  coverageThreshold: {
+    global: {
+      statements: 75,
+    },
+  },
   testEnvironment: 'node',
 };
 

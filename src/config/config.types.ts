@@ -14,6 +14,14 @@ export interface GlobalAppConfig {
 export interface AppEnvConfig {
   PORT: number;
 
+  JWT_SECRET: string;
+  INITIAL_ADMIN_EMAIL: string;
+
+  RATE_LIMIT_TTL: number;
+  RATE_LIMIT_AUTHENTICATED: number;
+  RATE_LIMIT_UNAUTHENTICATED: number;
+  RATE_LIMIT_ADMIN: number;
+
   DB_HOST: string;
   DB_PORT_WRITE: string;
   DB_PORT_READ: string;
