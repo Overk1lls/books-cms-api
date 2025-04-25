@@ -1,0 +1,525 @@
+{
+  "info": {
+    "name": "Books CMS API",
+    "_postman_id": "f1a1e640-6c01-4a5a-b4d6-ecb1e0381234",
+    "description": "GraphQL API collection for Books CMS",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  register(input: {\n    email: \"test@gmail.com\"\n    password: \"qwerty\"\n  }) {\n    id\n    email\n    role\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  login(input: {\n    email: \"test@gmail.com\"\n    password: \"qwerty\"\n  }) {\n    accessToken\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.login && response.data.login.accessToken) {",
+                  "    pm.environment.set(\"jwt\", response.data.login.accessToken);",
+                  "    pm.collectionVariables.set(\"jwt\", response.data.login.accessToken);",
+                  "    console.log(\"JWT set to environment variable\");",
+                  "} else {",
+                  "    console.warn(\"JWT not found in response\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Make User Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  makeUserAdmin(input: {\n    userId: \"111da7d6-330d-4eaa-b283-b81e5c00665b\"\n  }) {\n    id\n    email\n    role\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nquery {\n  me {\n    id\n    email\n    role\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nquery {\n  getUser(input: {\n    id: \"7c5ef962-3250-4d36-8aed-163d4b6e57d3\"\n    email: \"test@gmail.com\"\n  }) {\n    id\n    email\n    role\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Author",
+      "item": [
+        {
+          "name": "Create Author",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  createAuthor(input: {\n    name: \"Test Author 1\"\n    biography: \"Test biography\"\n  }) {\n    id\n    name\n    biography\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Author",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  updateAuthor(id: \"7a63b138-970e-4178-949c-3af099c3aac0\", input: {\n    name: \"Test Author 1 Edited\"\n    biography: \"Test biography edited\"\n  }) {\n    id\n    name\n    biography \n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Author",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  deleteAuthor(id: \"7a63b138-970e-4178-949c-3af099c3aac0\")\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Author",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nquery {\n  author(id: \"de7d6b9e-210b-4247-8820-3127ae1e1074\") {\n    id\n    name\n    biography\n    booksCount\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Authors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nquery {\n  getAuthors(input: {\n    booksCount: 1\n    name: \"Test\"\n    sortBy: name\n    sortOrder: \"ASC\"\n    limit: 10\n    page: 1\n  }) {\n    data {\n      id\n      name\n      biography\n      booksCount\n    }\n    page\n    pageSize\n    total\n    totalPages\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Book",
+      "item": [
+        {
+          "name": "Create Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  createBook(input: {\n    authorId: \"de7d6b9e-210b-4247-8820-3127ae1e1074\"\n    title: \"Test Book 1\"\n    publicationDate: \"2025-04-24T15:16:50.814Z\"\n    genre: \"Horror\"\n  }) {\n    id\n    title\n    genre\n    publicationDate\n    author {\n      id\n      name\n      biography\n    }\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  updateBook(id: \"fdce3070-93f3-4ae3-befd-0d1886c2d412\", input: {\n    title: \"Test Book 1 Edited\"\n    genre: \"Thriller\"\n  }) {\n    id\n    title\n    genre\n    publicationDate\n    author {\n      id\n      name\n      biography\n    }\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nmutation {\n  deleteBook(id: \"fdce3070-93f3-4ae3-befd-0d1886c2d412\")\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nquery {\n  book(id: \"a9c0cb45-fe75-4e66-9a57-43af53fd781e\") {\n    id\n    title\n    genre\n    publicationDate\n    author {\n      id\n      name\n      biography\n    }\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Books",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "\nquery {\n  getBooks(input: {\n    author: \"Test\"\n    title: \"Test\"\n    publicationYear: 2025\n    sortBy: title\n    sortOrder: \"ASC\"\n    limit: 10\n    page: 1\n  }) {\n    data {\n      id\n      title\n      genre\n      publicationDate\n      author {\n        id\n        name\n        biography\n      }\n    }\n    page\n    pageSize\n    total\n    totalPages\n  }\n}\n"
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/graphql",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "jwt",
+      "value": ""
+    }
+  ]
+}
