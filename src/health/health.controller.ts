@@ -19,7 +19,7 @@ export class HealthController implements OnApplicationShutdown {
 
     private readonly healthService: HealthCheckService,
     private readonly dbIndicator: TypeOrmHealthIndicator,
-    private readonly redisIndication: RedisHealthIndicator,
+    private readonly redisIndicatior: RedisHealthIndicator,
   ) {
     this.redis = new Redis(redisConfig);
   }
@@ -34,7 +34,7 @@ export class HealthController implements OnApplicationShutdown {
     return await this.healthService.check([
       () => this.dbIndicator.pingCheck('database'),
       () =>
-        this.redisIndication.checkHealth('redis', {
+        this.redisIndicatior.checkHealth('redis', {
           type: 'redis',
           client: this.redis,
           timeout: 500,

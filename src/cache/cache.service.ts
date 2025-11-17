@@ -3,7 +3,7 @@ import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
 @Injectable()
-export class RedisService implements OnApplicationShutdown {
+export class CacheService implements OnApplicationShutdown {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cache: Cache,
@@ -13,7 +13,7 @@ export class RedisService implements OnApplicationShutdown {
     await this.cache.disconnect();
   }
 
-  async setCache<T = unknown>(
+  async set<T = unknown>(
     key: string,
     value: T,
     ttl: number = 3600,
@@ -21,11 +21,11 @@ export class RedisService implements OnApplicationShutdown {
     return await this.cache.set<T>(key, value, ttl);
   }
 
-  async getCache<T = unknown>(key: string): Promise<T | null> {
+  async get<T = unknown>(key: string): Promise<T | null> {
     return await this.cache.get<T>(key);
   }
 
-  async deleteCache(key: string): Promise<boolean> {
+  async delete(key: string): Promise<boolean> {
     return await this.cache.del(key);
   }
 

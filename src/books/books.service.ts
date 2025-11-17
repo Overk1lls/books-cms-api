@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
+import { CacheService } from '../cache/cache.service';
 import { formCacheKeyByEntity } from '../core/core.utils';
-import { RedisService } from '../redis/redis.service';
+import { Cached } from '../core/decorators';
 import { Book, BookCreationAttrs, BookUpdateAttrs } from './books.entity';
 import { GetBooksInputDto, PaginatedBookDto } from './dto';
 
@@ -12,17 +14,15 @@ export class BooksService {
     @InjectRepository(Book)
     private readonly repository: Repository<Book>,
 
-    private readonly redisService: RedisService,
+    private readonly moduleRef: ModuleRef,
+    private readonly cacheService: CacheService,
   ) {}
 
+  @Cached(PaginatedBookDto, 300, (dto: GetBooksInputDto) =>
+    formCacheKeyByEntity('books', dto),
+  )
   async findAll(dto: GetBooksInputDto): Promise<PaginatedBookDto> {
     const { limit = 10, page = 1 } = dto;
-
-    const cacheKey = formCacheKeyByEntity('books', dto);
-    const cached = await this.redisService.getCache<PaginatedBookDto>(cacheKey);
-    if (cached) {
-      return cached;
-    }
 
     const qb = this.buildFindBooksQuery(dto);
     const [data, total] = await qb.getManyAndCount();
@@ -33,8 +33,6 @@ export class BooksService {
       totalPages: Math.ceil((total ?? 0) / limit),
       data: data ?? [],
     };
-
-    await this.redisService.setCache(cacheKey, result, 300);
 
     return result;
   }
@@ -47,6 +45,7 @@ export class BooksService {
     return book;
   }
 
+  @Cached(Book, 300, (id: string) => `book:${id}`)
   async findById(id: string): Promise<Book | null> {
     return await this.repository.findOneBy({ id });
   }
@@ -55,7 +54,7 @@ export class BooksService {
     const book = this.repository.create(bookData);
     const createdBook = await this.repository.save(book);
 
-    await this.redisService.clear();
+    await this.cacheService.clear();
 
     return createdBook;
   }
@@ -67,18 +66,16 @@ export class BooksService {
     const merged = this.repository.merge(book, attrs);
     const updated = await this.repository.save(merged);
 
-    await this.redisService.clear();
+    await this.cacheService.clear();
 
     return updated;
   }
 
   async delete(id: string): Promise<boolean> {
     const { affected } = await this.repository.delete(id);
-
     if (affected) {
-      await this.redisService.clear();
+      await this.cacheService.clear();
     }
-
     return !!affected;
   }
 

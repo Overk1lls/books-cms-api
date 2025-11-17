@@ -4,9 +4,9 @@ import { randomUUID } from 'crypto';
 import { QueryFailedError } from 'typeorm';
 import { Author } from '../authors/authors.entity';
 import { AuthorsService } from '../authors/authors.service';
+import { CacheService } from '../cache/cache.service';
 import { CoreModule } from '../core/core.module';
 import { randomString } from '../core/core.utils';
-import { RedisService } from '../redis/redis.service';
 import { Book, BookUpdateAttrs } from './books.entity';
 import { BooksModule } from './books.module';
 import { BooksService } from './books.service';
@@ -16,14 +16,14 @@ describe('BooksService', () => {
   let module: TestingModule;
   let service: BooksService;
   let authorsService: AuthorsService;
-  let redisService: RedisService;
+  let cacheService: CacheService;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [CoreModule, BooksModule],
       providers: [
         {
-          provide: RedisService,
+          provide: CacheService,
           useValue: {
             getCache: jest.fn(),
             setCache: jest.fn(),
@@ -35,7 +35,7 @@ describe('BooksService', () => {
 
     service = module.get(BooksService);
     authorsService = module.get(AuthorsService);
-    redisService = module.get(RedisService);
+    cacheService = module.get(CacheService);
   });
 
   afterAll(async () => {
@@ -84,7 +84,7 @@ describe('BooksService', () => {
 
   describe('findAll', () => {
     it('should create and find a book', async () => {
-      jest.spyOn(redisService, 'getCache').mockResolvedValueOnce(null);
+      jest.spyOn(cacheService, 'get').mockResolvedValueOnce(null);
 
       const randomStr = randomString();
       const author = await authorsService.create({
@@ -120,7 +120,7 @@ describe('BooksService', () => {
     });
 
     it('should return cached', async () => {
-      jest.spyOn(redisService, 'getCache').mockResolvedValueOnce({});
+      jest.spyOn(cacheService, 'get').mockResolvedValueOnce({});
 
       const result = await service.findAll({});
 
@@ -144,7 +144,7 @@ describe('BooksService', () => {
 
   describe('delete', () => {
     it('should create and delete a book', async () => {
-      const spy = jest.spyOn(redisService, 'clear');
+      const spy = jest.spyOn(cacheService, 'clear');
 
       const randomStr = randomString();
       const author = await authorsService.create({
