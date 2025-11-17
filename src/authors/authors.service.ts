@@ -10,6 +10,7 @@ import {
   formCacheKeyByEntity,
   isPgQueryConflictError,
 } from '../core/core.utils';
+import { Cached } from '../core/decorators';
 import { Author, AuthorUpdateAttrs } from './authors.entity';
 import { AuthorCreationInputDto, PaginatedAuthorDto } from './dto';
 import { GetAuthorsInputDto } from './dto/get-authors-input.dto';
@@ -47,14 +48,11 @@ export class AuthorsService {
     return updated;
   }
 
+  @Cached(PaginatedAuthorDto, 300, (dto: GetAuthorsInputDto) =>
+    formCacheKeyByEntity('authors', dto),
+  )
   async findAll(dto: GetAuthorsInputDto): Promise<PaginatedAuthorDto> {
     const { limit = 10, page = 1, name, booksCount, sortBy, sortOrder } = dto;
-
-    const cacheKey = formCacheKeyByEntity('authors', dto);
-    const cached = await this.cacheService.get<PaginatedAuthorDto>(cacheKey);
-    if (cached) {
-      return cached;
-    }
 
     const qb = this.repository
       .createQueryBuilder('a')
@@ -83,8 +81,6 @@ export class AuthorsService {
       data: data ?? [],
     };
 
-    await this.cacheService.set(cacheKey, result, 300);
-
     return result;
   }
 
@@ -96,17 +92,16 @@ export class AuthorsService {
     return author;
   }
 
+  @Cached(Author, 300, (id: string) => `author:${id}`)
   async findById(id: string): Promise<Author | null> {
     return await this.repository.findOneBy({ id });
   }
 
   async delete(id: string): Promise<boolean> {
     const { affected } = await this.repository.delete(id);
-
     if (affected) {
       await this.cacheService.clear();
     }
-
     return !!affected;
   }
 }

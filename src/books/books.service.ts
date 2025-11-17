@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CacheService } from '../cache/cache.service';
 import { formCacheKeyByEntity } from '../core/core.utils';
+import { Cached } from '../core/decorators';
 import { Book, BookCreationAttrs, BookUpdateAttrs } from './books.entity';
 import { GetBooksInputDto, PaginatedBookDto } from './dto';
 
@@ -15,14 +16,11 @@ export class BooksService {
     private readonly cacheService: CacheService,
   ) {}
 
+  @Cached(PaginatedBookDto, 300, (dto: GetBooksInputDto) =>
+    formCacheKeyByEntity('books', dto),
+  )
   async findAll(dto: GetBooksInputDto): Promise<PaginatedBookDto> {
     const { limit = 10, page = 1 } = dto;
-
-    const cacheKey = formCacheKeyByEntity('books', dto);
-    const cached = await this.cacheService.get<PaginatedBookDto>(cacheKey);
-    if (cached) {
-      return cached;
-    }
 
     const qb = this.buildFindBooksQuery(dto);
     const [data, total] = await qb.getManyAndCount();
@@ -33,8 +31,6 @@ export class BooksService {
       totalPages: Math.ceil((total ?? 0) / limit),
       data: data ?? [],
     };
-
-    await this.cacheService.set(cacheKey, result, 300);
 
     return result;
   }
@@ -47,6 +43,7 @@ export class BooksService {
     return book;
   }
 
+  @Cached(Book, 300, (id: string) => `book:${id}`)
   async findById(id: string): Promise<Book | null> {
     return await this.repository.findOneBy({ id });
   }
@@ -74,11 +71,9 @@ export class BooksService {
 
   async delete(id: string): Promise<boolean> {
     const { affected } = await this.repository.delete(id);
-
     if (affected) {
       await this.cacheService.clear();
     }
-
     return !!affected;
   }
 
