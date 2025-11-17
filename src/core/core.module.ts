@@ -9,11 +9,11 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Request, Response } from 'express';
 import { join } from 'path';
+import { CacheFactoryService } from '../cache/cache.factory';
 import { ExtendedConfigModule } from '../config/config.module';
 import { GlobalAppConfig } from '../config/config.types';
 import { TypeOrmFactoryService } from '../db/db.factory';
 import { DynamoDbModule } from '../dynamo-db/dynamo-db.module';
-import { RedisFactoryService } from '../redis/redis.factory';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { RedisFactoryService } from '../redis/redis.factory';
     DynamoDbModule.forRoot(),
     CacheModule.registerAsync({
       isGlobal: true,
-      useClass: RedisFactoryService,
+      useClass: CacheFactoryService,
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import redisConfig, { RedisConfig } from '../config/redis/redis.config';
 
 @Injectable()
-export class RedisFactoryService implements CacheOptionsFactory {
+export class CacheFactoryService implements CacheOptionsFactory {
   constructor(
     @Inject(redisConfig.KEY)
     private readonly config: RedisConfig,
