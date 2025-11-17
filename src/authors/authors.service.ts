@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CacheService } from '../cache/cache.service';
@@ -21,6 +22,7 @@ export class AuthorsService {
     @InjectRepository(Author)
     private readonly repository: Repository<Author>,
 
+    private readonly moduleRef: ModuleRef,
     private readonly cacheService: CacheService,
   ) {}
 

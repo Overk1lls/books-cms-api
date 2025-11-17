@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CacheService } from '../cache/cache.service';
@@ -13,6 +14,7 @@ export class BooksService {
     @InjectRepository(Book)
     private readonly repository: Repository<Book>,
 
+    private readonly moduleRef: ModuleRef,
     private readonly cacheService: CacheService,
   ) {}
 
